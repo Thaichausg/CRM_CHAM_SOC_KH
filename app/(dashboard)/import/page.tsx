@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { importExcelData } from '@/lib/excelImport';
-import { getDashboardStats } from '@/lib/store';
+import { useData } from '@/lib/DataProvider';
 import { useRouter } from 'next/navigation';
 
 export default function ImportPage() {
+  const { importData, stats } = useData();
   const [dragActive, setDragActive] = useState(false);
   const [importing, setImporting] = useState(false);
   const [imported, setImported] = useState(false);
@@ -28,8 +28,64 @@ export default function ImportPage() {
     try {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
-      importExcelData(workbook);
-      setImported(true);
+
+      const parseRows = (sheetName: string): any[][] | null => {
+        const sheet = workbook.Sheets[sheetName];
+        if (!sheet) return null;
+        return XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+      };
+
+      const parseExcelDate = (val: any): string => {
+        if (!val) return '';
+        if (val instanceof Date) return val.toISOString().split('T')[0];
+        if (typeof val === 'string') return val;
+        if (typeof val === 'number') {
+          const d = new Date(Math.round((val - 25569) * 86400 * 1000));
+          return d.toISOString().split('T')[0];
+        }
+        return String(val);
+      };
+
+      const parseNumber = (val: any): number => {
+        if (!val) return 0;
+        if (typeof val === 'number') return val;
+        if (typeof val === 'string') {
+          const cleaned = val.replace(/[^\d]/g, '');
+          return parseInt(cleaned) || 0;
+        }
+        return 0;
+      };
+
+      const cleanPhone = (val: any): string => {
+        if (!val) return '';
+        return String(val).replace(/[^\d]/g, '');
+      };
+
+      const khRows = parseRows('Danh sách KH');
+      const plRows = parseRows('Phân loại KH');
+      const csRows = parseRows('Chăm sóc');
+      const pl2Rows = parseRows('Pipeline');
+      const kbRows = parseRows('Kịch bản');
+
+      const customerData = khRows ? (khRows.slice(1) as any[][]).filter(r => r[0]) : [];
+      const groupData = plRows ? (plRows.slice(1) as any[][]).filter(r => r[0]) : [];
+      const taskData = csRows ? (csRows.slice(1) as any[][]).filter(r => r[0]) : [];
+      const pipelineData = pl2Rows ? (pl2Rows.slice(1) as any[][]).filter(r => r[0]) : [];
+      const scriptsData = kbRows ? (kbRows.slice(1) as any[][]).filter(r => r[0]) : [];
+
+      const success = await importData({
+        customers: customerData,
+        groups: groupData,
+        tasks: taskData,
+        pipeline: pipelineData,
+        scriptsData,
+      });
+
+      if (success) {
+        setImported(true);
+      } else {
+        setError('Lỗi khi import dữ liệu');
+      }
     } catch (e: any) {
       setError('Lỗi khi đọc file: ' + e.message);
     } finally {
@@ -51,11 +107,8 @@ export default function ImportPage() {
     }
   };
 
-  const stats = imported ? getDashboardStats() : null;
-
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl mx-auto">
-      {/* Header */}
       <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-xl p-6 text-white">
         <div className="flex items-center gap-3 mb-2">
           <FileSpreadsheet className="w-8 h-8" />
@@ -66,7 +119,6 @@ export default function ImportPage() {
         </p>
       </div>
 
-      {/* Upload area */}
       {!imported && (
         <div
           className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${
@@ -86,24 +138,19 @@ export default function ImportPage() {
               <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Upload className="w-8 h-8 text-blue-500" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                Kéo thả file Excel vào đây
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Kéo thả file Excel vào đây</h3>
               <p className="text-gray-500 mb-4">hoặc</p>
               <label className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer font-medium">
                 <Upload className="w-4 h-4" />
                 Chọn file
                 <input type="file" accept=".xlsx,.xls" onChange={handleChange} className="hidden" />
               </label>
-              <p className="text-sm text-gray-400 mt-4">
-                Hỗ trợ: .xlsx, .xls
-              </p>
+              <p className="text-sm text-gray-400 mt-4">Hỗ trợ: .xlsx, .xls</p>
             </>
           )}
         </div>
       )}
 
-      {/* Error */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -111,7 +158,6 @@ export default function ImportPage() {
         </div>
       )}
 
-      {/* Success */}
       {imported && stats && (
         <div className="space-y-4">
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
@@ -130,8 +176,8 @@ export default function ImportPage() {
                 <p className="text-2xl font-bold text-blue-800">{stats.totalContracts}</p>
               </div>
               <div className="p-4 bg-green-50 rounded-lg">
-                <p className="text-sm text-green-600">Khách hàng</p>
-                <p className="text-2xl font-bold text-green-800">{stats.vipCustomers + stats.activeContracts}</p>
+                <p className="text-sm text-green-600">KH hiệu lực</p>
+                <p className="text-2xl font-bold text-green-800">{stats.activeContracts}</p>
               </div>
               <div className="p-4 bg-purple-50 rounded-lg">
                 <p className="text-sm text-purple-600">Tổng APE</p>
@@ -155,14 +201,13 @@ export default function ImportPage() {
               onClick={() => router.push('/')}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
-                Xem Dashboard
-                <ArrowRight className="w-4 h-4" />
+              Xem Dashboard
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
       )}
 
-      {/* Supported sheets info */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Sheet được hỗ trợ</h3>
         <div className="space-y-3">
