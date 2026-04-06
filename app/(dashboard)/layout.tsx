@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Users, UserCheck, PhoneCall,
-  TrendingUp, FileText, BarChart3, Upload, Menu, X
+  TrendingUp, FileText, BarChart3, Upload, Menu, X, LogOut
 } from 'lucide-react';
 
 const navItems = [
@@ -62,8 +62,26 @@ export default function DashboardLayout({
           })}
         </nav>
 
+        {/* User info at bottom */}
         <div className="p-3 border-t border-slate-700">
-          <p className="text-xs text-slate-500 text-center">
+          <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-800/50">
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+              A
+            </div>
+            {sidebarOpen && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">Admin</p>
+                <p className="text-xs text-slate-400">Quản trị viên</p>
+              </div>
+            )}
+          </div>
+          {sidebarOpen && (
+            <button className="w-full mt-2 flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+              <LogOut className="w-4 h-4" />
+              Đăng xuất
+            </button>
+          )}
+          <p className="text-xs text-slate-500 text-center mt-2">
             HTC Integrated CRM v1.0
           </p>
         </div>
@@ -83,12 +101,6 @@ export default function DashboardLayout({
             <h2 className="text-lg font-semibold text-gray-800">
               {navItems.find(n => n.href === pathname)?.label || 'Dashboard'}
             </h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-              A
-            </div>
-            <span className="text-sm font-medium text-gray-700">Admin</span>
           </div>
         </header>
 
