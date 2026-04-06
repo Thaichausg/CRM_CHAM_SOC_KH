@@ -212,18 +212,23 @@ export default function ImportPage() {
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Sheet được hỗ trợ</h3>
         <div className="space-y-3">
           {[
-            { name: 'Danh sách KH', desc: 'Dữ liệu hợp đồng bảo hiểm khách hàng' },
-            { name: 'Phân loại KH', desc: 'Phân nhóm khách hàng theo APE' },
-            { name: 'Chăm sóc', desc: 'Danh sách công việc chăm sóc khách hàng' },
-            { name: 'Pipeline', desc: 'Quản lý cơ hội kinh doanh' },
-            { name: 'Kịch bản', desc: 'Kịch bản chăm sóc khách hàng theo tình huống' },
+            { name: 'Danh sách KH', desc: 'Dữ liệu hợp đồng bảo hiểm khách hàng', file: '/mau_danh_sach_kh.csv' },
+            { name: 'Phân loại KH', desc: 'Phân nhóm khách hàng theo APE', file: '/mau_phan_loai_kh.csv' },
+            { name: 'Chăm sóc', desc: 'Danh sách công việc chăm sóc khách hàng', file: '/mau_cham_soc.csv' },
+            { name: 'Pipeline', desc: 'Quản lý cơ hội kinh doanh', file: '/mau_pipeline.csv' },
+            { name: 'Kịch bản', desc: 'Kịch bản chăm sóc khách hàng theo tình huống', file: '/mau_kich_ban.csv' },
           ].map(sheet => (
-            <div key={sheet.name} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-green-500 rounded-full" />
-              <div>
-                <p className="text-sm font-medium text-gray-800">{sheet.name}</p>
-                <p className="text-xs text-gray-500">{sheet.desc}</p>
+            <div key={sheet.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-green-500 rounded-full" />
+                <div>
+                  <p className="text-sm font-medium text-gray-800">{sheet.name}</p>
+                  <p className="text-xs text-gray-500">{sheet.desc}</p>
+                </div>
               </div>
+              <a href={sheet.file} download className="text-xs text-blue-600 hover:text-blue-700 hover:underline">
+                Tải mẫu
+              </a>
             </div>
           ))}
         </div>
