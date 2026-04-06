@@ -121,7 +121,10 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Top 10 khách hàng theo APE</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">Top 10 khách hàng theo APE</h3>
+            <a href="/customers" className="text-sm text-blue-600 hover:text-blue-700 font-medium">Xem tất cả</a>
+          </div>
           <div className="space-y-3">
             {topCustomers.map((customer: any, i: number) => (
               <div key={customer.name} className="flex items-center gap-3">
@@ -137,7 +140,10 @@ export default function DashboardPage() {
         </div>
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Sắp đến hạn (30 ngày)</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">Sắp đến hạn (30 ngày)</h3>
+            <a href="/care" className="text-sm text-blue-600 hover:text-blue-700 font-medium">Xem tất cả</a>
+          </div>
           <div className="space-y-3">
             {upcomingTasks.length === 0 ? (
               <p className="text-gray-500 text-center py-8">Không có khách hàng nào sắp đến hạn</p>
