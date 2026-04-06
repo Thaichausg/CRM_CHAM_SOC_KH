@@ -24,6 +24,19 @@ export const customers = pgTable('customers', {
   daysToDue: integer('days_to_due').default(0),
 });
 
+export const customerProfiles = pgTable('customer_profiles', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  birthday: text('birthday'),
+  gender: text('gender'),
+  address: text('address'),
+  phone: text('phone'),
+  contractCount: text('contract_count'),
+  rank: text('rank'),
+  cmnd: text('cmnd'),
+  age: integer('age'),
+});
+
 export const customerGroups = pgTable('customer_groups', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),

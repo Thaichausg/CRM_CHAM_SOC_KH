@@ -1,10 +1,23 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { customers as customersTable } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { customers as customersTable, customerProfiles as profilesTable } from '@/db/schema';
+import { eq, sql, desc } from 'drizzle-orm';
 
 export async function GET() {
-  const data = await db.select().from(customersTable);
+  const contracts = await db.select().from(customersTable);
+  const profiles = await db.select().from(profilesTable);
+  
+  const profileMap = new Map(profiles.map(p => [p.name?.toLowerCase() || p.phone, p]));
+  
+  const data = contracts.map(c => {
+    const key = c.name?.toLowerCase() || c.phone;
+    const profile = profileMap.get(key);
+    return {
+      ...c,
+      profile: profile || null,
+    };
+  });
+  
   return NextResponse.json(data);
 }
 

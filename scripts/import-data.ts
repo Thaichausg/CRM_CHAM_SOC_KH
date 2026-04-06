@@ -2,13 +2,13 @@ import 'dotenv/config';
 import * as XLSX from 'xlsx';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import { customers, customerGroups, careTasks, pipelineItems, scripts } from '../db/schema.js';
+import { customers, customerProfiles, customerGroups, careTasks, pipelineItems, scripts } from '../db/schema.js';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-const db = drizzle(pool, { schema: { customers, customerGroups, careTasks, pipelineItems, scripts } });
+const db = drizzle(pool, { schema: { customers, customerProfiles, customerGroups, careTasks, pipelineItems, scripts } });
 
 function cleanPhone(val: any): string {
   if (!val) return '';
@@ -36,23 +36,37 @@ function parseExcelDate(val: any): string {
   return String(val);
 }
 
+function calculateAge(birthday: string): number {
+  if (!birthday) return 0;
+  const birthDate = new Date(birthday);
+  if (isNaN(birthDate.getTime())) return 0;
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
+
 async function importData() {
   console.log('📖 Reading Excel file...');
   const workbook = XLSX.readFile('../HTC_Integrated_CRM_PRO_FINAL.xlsx');
 
   console.log('🧹 Clearing existing data...');
   await db.delete(customers);
+  await db.delete(customerProfiles);
   await db.delete(customerGroups);
   await db.delete(careTasks);
   await db.delete(pipelineItems);
   await db.delete(scripts);
 
-  // Import customers
-  console.log('📥 Importing customers...');
-  const khSheet = workbook.Sheets['Danh sách KH'];
-  if (khSheet) {
-    const rows: any[][] = XLSX.utils.sheet_to_json(khSheet, { header: 1 });
-    const customerData = rows.slice(1).filter(r => r[0]).map(row => ({
+  // Import contracts (Danh sách Hợp đồng)
+  console.log('📥 Importing contracts...');
+  const hdSheet = workbook.Sheets['Danh sách Hợp đồng'];
+  if (hdSheet) {
+    const rows: any[][] = XLSX.utils.sheet_to_json(hdSheet, { header: 1 });
+    const contractData = rows.slice(1).filter(r => r[0]).map(row => ({
       contractNo: String(row[0] || ''),
       product: String(row[1] || ''),
       issueDate: parseExcelDate(row[2]),
@@ -74,8 +88,31 @@ async function importData() {
       dueDateObj: parseExcelDate(row[18]),
       daysToDue: typeof row[19] === 'number' ? row[19] : 0,
     }));
-    await db.insert(customers).values(customerData);
-    console.log(`   ✅ Imported ${customerData.length} customers`);
+    await db.insert(customers).values(contractData);
+    console.log(`   ✅ Imported ${contractData.length} contracts`);
+  }
+
+  // Import customer profiles (DS Khách hàng)
+  console.log('📥 Importing customer profiles...');
+  const khSheet = workbook.Sheets['DS Khách hàng'];
+  if (khSheet) {
+    const rows: any[][] = XLSX.utils.sheet_to_json(khSheet, { header: 1 });
+    const profileData = rows.slice(1).filter(r => r[0]).map(row => {
+      const birthday = parseExcelDate(row[1]);
+      return {
+        name: String(row[0] || ''),
+        birthday: birthday,
+        gender: String(row[2] || ''),
+        address: String(row[3] || ''),
+        phone: cleanPhone(row[4]),
+        contractCount: String(row[5] || ''),
+        rank: String(row[6] || ''),
+        cmnd: String(row[7] || ''),
+        age: birthday ? calculateAge(birthday) : 0,
+      };
+    });
+    await db.insert(customerProfiles).values(profileData);
+    console.log(`   ✅ Imported ${profileData.length} customer profiles`);
   }
 
   // Import groups

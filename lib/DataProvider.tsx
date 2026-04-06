@@ -8,6 +8,7 @@ interface DataState {
   tasks: any[];
   pipeline: any[];
   scripts: any[];
+  profiles: any[];
   stats: any;
   loading: boolean;
   error: string | null;
@@ -23,28 +24,30 @@ interface DataContextType extends DataState {
   addPipeline: (item: any) => Promise<void>;
   updateScript: (id: number, updates: any) => Promise<void>;
   importData: (data: any) => Promise<boolean>;
+  addProfile: (profile: any) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | null>(null);
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DataState>({
-    customers: [], groups: [], tasks: [], pipeline: [], scripts: [],
+    customers: [], groups: [], tasks: [], pipeline: [], scripts: [], profiles: [],
     stats: null, loading: true, error: null,
   });
 
   const refresh = useCallback(async () => {
     try {
       setState(s => ({ ...s, loading: true, error: null }));
-      const [customers, groups, tasks, pipeline, scripts, stats] = await Promise.all([
+      const [customers, groups, tasks, pipeline, scripts, stats, profiles] = await Promise.all([
         fetch('/api/customers').then(r => r.json()),
         fetch('/api/groups').then(r => r.json()),
         fetch('/api/tasks').then(r => r.json()),
         fetch('/api/pipeline').then(r => r.json()),
         fetch('/api/scripts').then(r => r.json()),
         fetch('/api/stats').then(r => r.json()),
+        fetch('/api/profiles').then(r => r.json()),
       ]);
-      setState({ customers, groups, tasks, pipeline, scripts, stats, loading: false, error: null });
+      setState({ customers, groups, tasks, pipeline, scripts, profiles, stats, loading: false, error: null });
     } catch (e: any) {
       setState(s => ({ ...s, loading: false, error: e.message }));
     }
@@ -104,8 +107,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addProfile = async (profile: any) => {
+    await fetch('/api/profiles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(profile) });
+    refresh();
+  };
+
   return (
-    <DataContext.Provider value={{ ...state, refresh, updateTask, deleteTask, addTask, updatePipeline, deletePipeline, addPipeline, updateScript, importData }}>
+    <DataContext.Provider value={{ ...state, refresh, updateTask, deleteTask, addTask, updatePipeline, deletePipeline, addPipeline, updateScript, importData, addProfile }}>
       {children}
     </DataContext.Provider>
   );

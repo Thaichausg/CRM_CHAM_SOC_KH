@@ -19,12 +19,14 @@ export default function CustomersPage() {
   const itemsPerPage = 20;
 
   const customerStats = useMemo(() => {
-    const stats: Record<string, { count: number; totalPremium: number }> = {};
+    const stats: Record<string, { count: number; totalPremium: number; totalApe: number; contracts: any[] }> = {};
     (customers || []).forEach((c: any) => {
       const name = c.name || c.policy_holder || '';
-      if (!stats[name]) stats[name] = { count: 0, totalPremium: 0 };
+      if (!stats[name]) stats[name] = { count: 0, totalPremium: 0, totalApe: 0, contracts: [] };
       stats[name].count++;
       stats[name].totalPremium += c.premium_number ?? c.premiumNumber ?? 0;
+      stats[name].totalApe += c.ape_number ?? c.apeNumber ?? 0;
+      stats[name].contracts.push(c);
     });
     return stats;
   }, [customers]);
@@ -197,31 +199,65 @@ export default function CustomersPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowDetail(null)}>
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900">Chi tiết hợp đồng</h3>
+              <h3 className="text-lg font-bold text-gray-900">Chi tiết khách hàng</h3>
               <div className="mt-2 flex items-center gap-4 p-3 bg-blue-50 rounded-lg">
-                <div className="flex-1">
-                  <p className="text-xs text-blue-600">Số Hợp đồng</p>
-                  <p className="text-xl font-bold text-blue-800">{showDetail.contract_no || showDetail.contractNo}</p>
-                </div>
                 <div className="flex-1">
                   <p className="text-xs text-blue-600">Họ tên khách hàng</p>
                   <p className="text-xl font-bold text-blue-800">{showDetail.name || showDetail.policy_holder}</p>
                 </div>
+                <div className="flex-1">
+                  <p className="text-xs text-blue-600">Số điện thoại</p>
+                  <p className="text-xl font-bold text-blue-800">{showDetail.phone}</p>
+                </div>
               </div>
+              {customerStats[showDetail.name || showDetail.policy_holder] && customerStats[showDetail.name || showDetail.policy_holder].count > 1 && (
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <p className="text-xs text-green-600">Tổng phí</p>
+                    <p className="text-lg font-bold text-green-700">{formatCurrency(customerStats[showDetail.name || showDetail.policy_holder].totalPremium)}</p>
+                  </div>
+                  <div className="p-3 bg-purple-50 rounded-lg">
+                    <p className="text-xs text-purple-600">Tổng APE</p>
+                    <p className="text-lg font-bold text-purple-700">{formatCurrency(customerStats[showDetail.name || showDetail.policy_holder].totalApe)}</p>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className="text-xs text-gray-500">Sản phẩm</label><p className="text-sm font-medium">{showDetail.product}</p></div>
-                <div><label className="text-xs text-gray-500">Tình trạng</label><span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(showDetail.status)}`}>{showDetail.status}</span></div>
-                <div><label className="text-xs text-gray-500">Định kỳ</label><p className="text-sm font-medium">{showDetail.payment_cycle || showDetail.paymentCycle}</p></div>
-                <div><label className="text-xs text-gray-500">SĐT</label><p className="text-sm font-medium">{showDetail.phone}</p></div>
-                <div><label className="text-xs text-gray-500">Tư vấn viên</label><p className="text-sm font-medium">{showDetail.agent}</p></div>
-                <div><label className="text-xs text-gray-500">Bên mua BH</label><p className="text-sm font-medium">{showDetail.policy_holder}</p></div>
-                <div><label className="text-xs text-gray-500">Ngày hiệu lực</label><p className="text-sm font-medium">{formatDate(showDetail.effective_date || showDetail.effectiveDate)}</p></div>
-                <div><label className="text-xs text-gray-500">Ngày đến hạn</label><p className="text-sm font-medium">{formatDate(showDetail.due_date || showDetail.dueDate)}</p></div>
-                <div><label className="text-xs text-gray-500">Phí định kỳ</label><p className="text-sm font-semibold text-blue-600">{formatCurrency(showDetail.premium_number ?? showDetail.premiumNumber ?? 0)}</p></div>
-                <div><label className="text-xs text-gray-500">APE</label><p className="text-sm font-semibold text-green-600">{formatCurrency(showDetail.ape_number ?? showDetail.apeNumber ?? 0)}</p></div>
-              </div>
+            <div className="p-4 space-y-3">
+              <h4 className="font-medium text-gray-800">Danh sách hợp đồng ({customerStats[showDetail.name || showDetail.policy_holder]?.count || 1})</h4>
+              {customerStats[showDetail.name || showDetail.policy_holder]?.contracts?.map((contract: any, idx: number) => (
+                <div key={idx} className="p-3 border border-gray-200 rounded-lg">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-mono text-sm text-blue-600">{contract.contract_no || contract.contractNo}</p>
+                      <p className="text-sm text-gray-600">{contract.product}</p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(contract.status)}`}>{contract.status}</span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-gray-500">Phí:</span> <span className="font-medium">{formatCurrency(contract.premium_number ?? contract.premiumNumber ?? 0)}</span></div>
+                    <div><span className="text-gray-500">APE:</span> <span className="font-medium text-blue-600">{formatCurrency(contract.ape_number ?? contract.apeNumber ?? 0)}</span></div>
+                    <div><span className="text-gray-500">Định kỳ:</span> <span className="font-medium">{contract.payment_cycle || contract.paymentCycle}</span></div>
+                    <div><span className="text-gray-500">Ngày hiệu lực:</span> <span className="font-medium">{formatDate(contract.effective_date || contract.effectiveDate)}</span></div>
+                  </div>
+                </div>
+              )) || (
+                <div className="p-3 border border-gray-200 rounded-lg">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-mono text-sm text-blue-600">{showDetail.contract_no || showDetail.contractNo}</p>
+                      <p className="text-sm text-gray-600">{showDetail.product}</p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(showDetail.status)}`}>{showDetail.status}</span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-gray-500">Phí:</span> <span className="font-medium">{formatCurrency(showDetail.premium_number ?? showDetail.premiumNumber ?? 0)}</span></div>
+                    <div><span className="text-gray-500">APE:</span> <span className="font-medium text-blue-600">{formatCurrency(showDetail.ape_number ?? showDetail.apeNumber ?? 0)}</span></div>
+                    <div><span className="text-gray-500">Định kỳ:</span> <span className="font-medium">{showDetail.payment_cycle || showDetail.paymentCycle}</span></div>
+                    <div><span className="text-gray-500">Ngày hiệu lực:</span> <span className="font-medium">{formatDate(showDetail.effective_date || showDetail.effectiveDate)}</span></div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="p-4 border-t border-gray-200 flex justify-end"><button onClick={() => setShowDetail(null)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">Đóng</button></div>
           </div>

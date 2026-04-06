@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Phone, CheckCircle, XCircle, Clock, Plus, Edit2, Trash2, Calendar } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Search, Phone, CheckCircle, XCircle, Clock, Plus, Edit2, Trash2, Calendar, Gift, Sparkles, Cake } from 'lucide-react';
 import { useData } from '@/lib/DataProvider';
-import { formatCurrency, formatDate, getDaysStatus } from '@/lib/utils';
+import { formatCurrency, formatDate, getDaysStatus, getUpcomingBirthdays } from '@/lib/utils';
 
 export default function CarePage() {
-  const { tasks, loading, updateTask, deleteTask, addTask } = useData();
+  const { tasks, profiles, loading, updateTask, deleteTask, addTask } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
@@ -15,6 +15,8 @@ export default function CarePage() {
     customerName: '', phone: '', dueDate: '', paymentCycle: 'Hàng quý',
     premium: 0, ape: 0, status: 'Đang hiệu lực', task: '', deadline: '', notes: ''
   });
+
+  const upcomingBirthdays = useMemo(() => getUpcomingBirthdays(profiles || [], 30), [profiles]);
 
   const filtered = (tasks || []).filter((t: any) => {
     const name = t.customer_name || t.customerName || '';
@@ -66,6 +68,37 @@ export default function CarePage() {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"><div className="flex items-center gap-3"><Clock className="w-8 h-8 text-yellow-500" /><div><p className="text-sm text-gray-500">Chờ xử lý</p><p className="text-2xl font-bold text-yellow-600">{stats.pending}</p></div></div></div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"><div className="flex items-center gap-3"><XCircle className="w-8 h-8 text-red-500" /><div><p className="text-sm text-gray-500">Quá hạn</p><p className="text-2xl font-bold text-red-600">{stats.overdue}</p></div></div></div>
       </div>
+
+      {upcomingBirthdays.length > 0 && (
+        <div className="bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <Cake className="w-5 h-5 text-white" />
+            <h3 className="font-semibold text-white">Sinh nhật sắp tới</h3>
+            <span className="ml-auto bg-white/20 text-white text-xs px-2 py-1 rounded-full">{upcomingBirthdays.length} người</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {upcomingBirthdays.slice(0, 6).map((p: any) => (
+              <div key={p.id} className="bg-white/90 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-gray-900">{p.name}</p>
+                    <p className="text-sm text-gray-600">{p.phone}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-pink-600">{p.daysUntil === 0 ? 'Hôm nay!' : `${p.daysUntil} ngày`}</p>
+                    <p className="text-xs text-gray-500">{p.birthdayDate}</p>
+                  </div>
+                </div>
+                <div className="mt-2 p-2 bg-pink-50 rounded text-xs text-pink-700 italic">"{p.message}"</div>
+                <div className="mt-1 flex items-center justify-between text-xs text-gray-500">
+                  <span>{p.gender}, {p.age} tuổi</span>
+                  <span className={`px-2 py-0.5 rounded ${p.rank?.includes('Vàng') ? 'bg-yellow-100 text-yellow-700' : p.rank?.includes('Kim cương') ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>{p.rank || 'Thường'}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
         <div className="flex flex-wrap gap-3">

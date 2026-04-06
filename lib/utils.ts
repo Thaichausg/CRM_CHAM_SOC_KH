@@ -48,3 +48,79 @@ export function getDaysStatus(days: number): { label: string; color: string } {
   if (days <= 30) return { label: 'Sắp tới', color: 'text-yellow-600' };
   return { label: 'Còn xa', color: 'text-green-600' };
 }
+
+export function getBirthdayMessages(age: number, gender: string): string[] {
+  const messages: Record<string, string[]> = {
+    male: [
+      `Chúc bạn ${age} tuổi mạnh mẽ, thành công!`,
+      `Happy birthday! Chúc một năm mới thật nhiều may mắn!`,
+      `Chúc bạn luôn tràn đầy năng lượng và thành đạt!`,
+      `Sinh nhật vui vẻ! Chúc bạn sức khỏe dồi dào!`,
+      `Chúc bạn một năm mới đầy thành công và hạnh phúc!`,
+    ],
+    female: [
+      `Chúc bạn ${age} tuổi luôn xinh đẹp, hạnh phúc!`,
+      `Happy birthday! Chúc bạn luôn rạng rỡ!`,
+      `Sinh nhật vui vẻ! Chúc bạn luôn trẻ đẹp!`,
+      `Chúc bạn luôn hạnh phúc và được yêu thương!`,
+      `Chúc bạn một năm mới đầy niềm vui và sắc đẹp!`,
+    ],
+    other: [
+      `Chúc bạn sinh nhật vui vẻ!`,
+      `Happy birthday! Chúc một năm mới thật nhiều may mắn!`,
+      `Chúc bạn luôn mạnh khỏe và hạnh phúc!`,
+      `Sinh nhật vui vẻ! Chúc bạn thành công!`,
+      `Chúc bạn một năm mới đầy thành công!`,
+    ],
+  };
+  
+  const key = gender?.toLowerCase() === 'nam' ? 'male' : gender?.toLowerCase() === 'nữ' ? 'female' : 'other';
+  return messages[key];
+}
+
+export function getUpcomingBirthdays(profiles: any[], daysAhead: number = 30): any[] {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  
+  return profiles
+    .map(p => {
+      const birthday = p.birthday;
+      if (!birthday) return null;
+      
+      let birthDate: Date;
+      if (birthday instanceof Date) {
+        birthDate = birthday;
+      } else {
+        birthDate = new Date(birthday);
+        if (isNaN(birthDate.getTime())) {
+          const parts = String(birthday).split(/[\/\-]/);
+          if (parts.length === 3) {
+            birthDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+          }
+        }
+      }
+      
+      if (isNaN(birthDate.getTime())) return null;
+      
+      let thisYearBirthday = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
+      if (thisYearBirthday < today) {
+        thisYearBirthday = new Date(currentYear + 1, birthDate.getMonth(), birthDate.getDate());
+      }
+      
+      const daysUntil = Math.ceil((thisYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysUntil > daysAhead) return null;
+      
+      const age = currentYear - birthDate.getFullYear();
+      
+      return {
+        ...p,
+        birthdayDate: thisYearBirthday.toISOString().split('T')[0],
+        daysUntil,
+        age,
+        message: getBirthdayMessages(age, p.gender)?.[0] || 'Chúc mừng sinh nhật!',
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.daysUntil - b.daysUntil);
+}

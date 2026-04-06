@@ -10,8 +10,8 @@ import {
 
 const navItems = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard, page: 'dashboard' },
-  { label: 'Danh sách KH', href: '/customers', icon: Users, page: 'customers' },
-  { label: 'Phân loại KH', href: '/classification', icon: UserCheck, page: 'classification' },
+  { label: 'Danh sách HĐ', href: '/customers', icon: Users, page: 'customers' },
+  { label: 'Xếp hạng', href: '/classification', icon: UserCheck, page: 'classification' },
   { label: 'Chăm sóc KH', href: '/care', icon: PhoneCall, page: 'care' },
   { label: 'Pipeline', href: '/pipeline', icon: TrendingUp, page: 'pipeline' },
   { label: 'Kịch bản', href: '/scripts', icon: FileText, page: 'scripts' },
