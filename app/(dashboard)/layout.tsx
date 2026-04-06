@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Users, UserCheck, PhoneCall,
-  TrendingUp, FileText, BarChart3, Upload, Menu, X, LogOut, ChevronLeft
+  TrendingUp, FileText, BarChart3, Upload, Menu, X, LogOut, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 const navItems = [
@@ -25,7 +25,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -36,6 +36,12 @@ export default function DashboardLayout({
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [isMobile]);
 
   const handleToggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -67,17 +73,22 @@ export default function DashboardLayout({
           ${isMobile ? 'shadow-2xl' : ''}
         `}
       >
-        <div className="p-3 md:p-4 border-b border-slate-700 flex items-center justify-between">
+        {/* Toggle button at top of sidebar */}
+        <div className="p-3 border-b border-slate-700 flex items-center justify-between">
           {(sidebarOpen || isMobile) && (
             <h1 className="text-lg md:text-xl font-bold flex items-center gap-2">
               <span className="text-blue-400">CRM</span>
               {!isMobile && <span className="text-slate-300 text-sm">Chăm sóc KH</span>}
             </h1>
           )}
-          {!isMobile && !sidebarOpen && (
-            <div className="w-full flex justify-center">
-              <span className="text-blue-400 font-bold text-xl">C</span>
-            </div>
+          {!isMobile && (
+            <button 
+              onClick={handleToggleSidebar}
+              className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+              title={sidebarOpen ? 'Ẩn sidebar' : 'Hiện sidebar'}
+            >
+              {sidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+            </button>
           )}
           {isMobile && sidebarOpen && (
             <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-slate-800 rounded">
@@ -154,13 +165,14 @@ export default function DashboardLayout({
       >
         {/* Top bar */}
         <header className="bg-white border-b border-gray-200 px-3 md:px-4 py-2 md:py-3 flex items-center gap-2 md:gap-3 flex-shrink-0">
-          <button
-            onClick={handleToggleSidebar}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            title={sidebarOpen ? 'Ẩn sidebar' : 'Hiện sidebar'}
-          >
-            {sidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          {isMobile && (
+            <button
+              onClick={handleToggleSidebar}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
           <div className="flex-1">
             <h2 className="text-base md:text-lg font-semibold text-gray-800">
               {navItems.find(n => n.href === pathname)?.label || 'Dashboard'}
