@@ -121,21 +121,12 @@ export default function DashboardLayout({
         {/* User info at bottom */}
         <div className="p-2 md:p-3 border-t border-slate-700">
           {(sidebarOpen || isMobile) && (
-            <>
-              <div className="flex items-center gap-2 md:gap-3 p-2 rounded-lg bg-slate-800/50">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                  A
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">Admin</p>
-                  <p className="text-xs text-slate-400">Quản trị viên</p>
-                </div>
+            <div className="flex items-center gap-2 p-2">
+              <div className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                A
               </div>
-              <button className="w-full mt-2 flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-                <LogOut className="w-4 h-4" />
-                Đăng xuất
-              </button>
-            </>
+              <span className="text-sm text-white truncate">Admin</span>
+            </div>
           )}
           {!isMobile && !sidebarOpen && (
             <div className="flex justify-center">
@@ -144,9 +135,11 @@ export default function DashboardLayout({
               </div>
             </div>
           )}
-          <p className={`text-xs text-slate-500 text-center mt-2 ${!sidebarOpen && !isMobile ? 'hidden' : ''}`}>
-            HTC Integrated CRM v1.0
-          </p>
+          {(sidebarOpen || isMobile) && (
+            <p className="text-xs text-slate-500 text-center mt-2">
+              CRM v1.0
+            </p>
+          )}
         </div>
       </aside>
 

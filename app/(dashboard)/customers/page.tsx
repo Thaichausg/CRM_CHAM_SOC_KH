@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, ChevronLeft, ChevronRight, Eye, Filter, X } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Filter, X } from 'lucide-react';
 import { useData } from '@/lib/DataProvider';
 import { formatCurrency, getStatusColor, formatDate } from '@/lib/utils';
 
@@ -154,7 +154,6 @@ export default function CustomersPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Định kỳ</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Phí</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">APE</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -168,18 +167,15 @@ export default function CustomersPage() {
                 const premium = customer.premium_number ?? customer.premiumNumber ?? 0;
                 const ape = customer.ape_number ?? customer.apeNumber ?? 0;
                 return (
-                  <tr key={contractNo} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 text-sm font-mono text-gray-600">{contractNo}</td>
-                    <td className="px-4 py-3"><div className="text-sm font-medium text-gray-900">{name}</div></td>
+                  <tr key={contractNo} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setShowDetail(customer)}>
+                    <td className="px-4 py-3 text-sm font-mono text-blue-600 hover:underline">{contractNo}</td>
+                    <td className="px-4 py-3"><div className="text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline">{name}</div></td>
                     <td className="px-4 py-3 text-sm text-gray-600">{phone}</td>
                     <td className="px-4 py-3 text-sm text-gray-600 max-w-[200px] truncate">{product}</td>
                     <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>{status}</span></td>
                     <td className="px-4 py-3 text-sm text-gray-600">{cycle}</td>
                     <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">{formatCurrency(premium)}</td>
                     <td className="px-4 py-3 text-sm text-right font-medium text-blue-600">{formatCurrency(ape)}</td>
-                    <td className="px-4 py-3 text-center">
-                      <button onClick={() => setShowDetail(customer)} className="p-1.5 hover:bg-blue-50 rounded-lg transition-colors"><Eye className="w-4 h-4 text-gray-500 hover:text-blue-600" /></button>
-                    </td>
                   </tr>
                 );
               })}
