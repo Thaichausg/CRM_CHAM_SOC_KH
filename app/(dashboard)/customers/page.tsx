@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, ChevronLeft, ChevronRight, Filter, X } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Filter, X, ExternalLink } from 'lucide-react';
 import { useData } from '@/lib/DataProvider';
 import { formatCurrency, getStatusColor, formatDate } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 export default function CustomersPage() {
-  const { customers, loading } = useData();
+  const { customers, profiles, loading } = useData();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [cycleFilter, setCycleFilter] = useState('all');
@@ -17,6 +19,20 @@ export default function CustomersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showDetail, setShowDetail] = useState<any>(null);
   const itemsPerPage = 20;
+
+  const profileMap = useMemo(() => {
+    const map = new Map();
+    (profiles || []).forEach((p: any) => {
+      const key = p.name?.toLowerCase() || p.phone;
+      map.set(key, p);
+    });
+    return map;
+  }, [profiles]);
+
+  const getProfile = (name: string, phone: string) => {
+    const key = name?.toLowerCase() || phone;
+    return profileMap.get(key) || null;
+  };
 
   const customerStats = useMemo(() => {
     const stats: Record<string, { count: number; totalPremium: number; totalApe: number; contracts: any[] }> = {};
@@ -40,7 +56,10 @@ export default function CustomersPage() {
       phone.includes(searchTerm) ||
       contractNo.includes(searchTerm);
     const status = c.status || '';
-    const matchStatus = statusFilter === 'all' || status.includes(statusFilter === 'active' ? 'Đang hiệu lực' : 'Mất hiệu lực');
+    const statusLower = status.toLowerCase();
+    const matchStatus = statusFilter === 'all' || 
+      (statusFilter === 'active' && statusLower.includes('đang')) ||
+      (statusFilter === 'lapsed' && statusLower.includes('mất'));
     const cycle = c.payment_cycle || c.paymentCycle || '';
     const matchCycle = cycleFilter === 'all' || cycle === cycleFilter;
     
@@ -198,34 +217,52 @@ export default function CustomersPage() {
       {showDetail && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowDetail(null)}>
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            {(() => {
+              const customerName = showDetail.name || showDetail.policy_holder;
+              const profile = getProfile(customerName, showDetail.phone);
+              return (
+                <>
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-lg font-bold text-gray-900">Chi tiết khách hàng</h3>
               <div className="mt-2 flex items-center gap-4 p-3 bg-blue-50 rounded-lg">
                 <div className="flex-1">
                   <p className="text-xs text-blue-600">Họ tên khách hàng</p>
-                  <p className="text-xl font-bold text-blue-800">{showDetail.name || showDetail.policy_holder}</p>
+                  <p className="text-xl font-bold text-blue-800">{customerName}</p>
                 </div>
                 <div className="flex-1">
                   <p className="text-xs text-blue-600">Số điện thoại</p>
                   <p className="text-xl font-bold text-blue-800">{showDetail.phone}</p>
                 </div>
               </div>
-              {customerStats[showDetail.name || showDetail.policy_holder] && customerStats[showDetail.name || showDetail.policy_holder].count > 1 && (
+              {profile && (
+                <>
+                  <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                    {profile.birthday && <div><p className="text-xs text-gray-500">Ngày sinh</p><p className="font-medium">{profile.birthday}</p></div>}
+                    {profile.gender && <div><p className="text-xs text-gray-500">Giới tính</p><p className="font-medium">{profile.gender}</p></div>}
+                    {profile.address && <div><p className="text-xs text-gray-500">Địa chỉ</p><p className="font-medium text-xs truncate">{profile.address}</p></div>}
+                    {profile.rank && <div><p className="text-xs text-gray-500">Xếp hạng</p><p className={`font-medium px-2 py-0.5 rounded text-xs inline-block ${profile.rank.includes('Vàng') ? 'bg-yellow-100 text-yellow-800' : profile.rank.includes('Kim cương') ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>{profile.rank}</p></div>}
+                  </div>
+                  <button onClick={() => { router.push('/classification?search=' + encodeURIComponent(customerName)); setShowDetail(null); }} className="mt-3 flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700">
+                    <ExternalLink className="w-3 h-3" /> Xem chi tiết khách hàng
+                  </button>
+                </>
+              )}
+              {customerStats[customerName] && customerStats[customerName].count > 1 && (
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <div className="p-3 bg-green-50 rounded-lg">
                     <p className="text-xs text-green-600">Tổng phí</p>
-                    <p className="text-lg font-bold text-green-700">{formatCurrency(customerStats[showDetail.name || showDetail.policy_holder].totalPremium)}</p>
+                    <p className="text-lg font-bold text-green-700">{formatCurrency(customerStats[customerName].totalPremium)}</p>
                   </div>
                   <div className="p-3 bg-purple-50 rounded-lg">
                     <p className="text-xs text-purple-600">Tổng APE</p>
-                    <p className="text-lg font-bold text-purple-700">{formatCurrency(customerStats[showDetail.name || showDetail.policy_holder].totalApe)}</p>
+                    <p className="text-lg font-bold text-purple-700">{formatCurrency(customerStats[customerName].totalApe)}</p>
                   </div>
                 </div>
               )}
             </div>
             <div className="p-4 space-y-3">
-              <h4 className="font-medium text-gray-800">Danh sách hợp đồng ({customerStats[showDetail.name || showDetail.policy_holder]?.count || 1})</h4>
-              {customerStats[showDetail.name || showDetail.policy_holder]?.contracts?.map((contract: any, idx: number) => (
+              <h4 className="font-medium text-gray-800">Danh sách hợp đồng ({customerStats[customerName]?.count || 1})</h4>
+              {customerStats[customerName]?.contracts?.map((contract: any, idx: number) => (
                 <div key={idx} className="p-3 border border-gray-200 rounded-lg">
                   <div className="flex justify-between items-start">
                     <div>
@@ -260,6 +297,9 @@ export default function CustomersPage() {
               )}
             </div>
             <div className="p-4 border-t border-gray-200 flex justify-end"><button onClick={() => setShowDetail(null)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">Đóng</button></div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
