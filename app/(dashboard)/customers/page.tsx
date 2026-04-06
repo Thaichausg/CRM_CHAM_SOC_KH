@@ -196,15 +196,27 @@ export default function CustomersPage() {
       {showDetail && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowDetail(null)}>
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-200"><h3 className="text-lg font-bold text-gray-900">Chi tiết hợp đồng</h3></div>
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900">Chi tiết hợp đồng</h3>
+              <div className="mt-2 flex items-center gap-4 p-3 bg-blue-50 rounded-lg">
+                <div className="flex-1">
+                  <p className="text-xs text-blue-600">Số Hợp đồng</p>
+                  <p className="text-xl font-bold text-blue-800">{showDetail.contract_no || showDetail.contractNo}</p>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-blue-600">Họ tên khách hàng</p>
+                  <p className="text-xl font-bold text-blue-800">{showDetail.name || showDetail.policy_holder}</p>
+                </div>
+              </div>
+            </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div><label className="text-xs text-gray-500">Mã hợp đồng</label><p className="text-sm font-medium">{showDetail.contract_no || showDetail.contractNo}</p></div>
                 <div><label className="text-xs text-gray-500">Sản phẩm</label><p className="text-sm font-medium">{showDetail.product}</p></div>
                 <div><label className="text-xs text-gray-500">Tình trạng</label><span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(showDetail.status)}`}>{showDetail.status}</span></div>
                 <div><label className="text-xs text-gray-500">Định kỳ</label><p className="text-sm font-medium">{showDetail.payment_cycle || showDetail.paymentCycle}</p></div>
                 <div><label className="text-xs text-gray-500">SĐT</label><p className="text-sm font-medium">{showDetail.phone}</p></div>
                 <div><label className="text-xs text-gray-500">Tư vấn viên</label><p className="text-sm font-medium">{showDetail.agent}</p></div>
+                <div><label className="text-xs text-gray-500">Bên mua BH</label><p className="text-sm font-medium">{showDetail.policy_holder}</p></div>
                 <div><label className="text-xs text-gray-500">Ngày hiệu lực</label><p className="text-sm font-medium">{formatDate(showDetail.effective_date || showDetail.effectiveDate)}</p></div>
                 <div><label className="text-xs text-gray-500">Ngày đến hạn</label><p className="text-sm font-medium">{formatDate(showDetail.due_date || showDetail.dueDate)}</p></div>
                 <div><label className="text-xs text-gray-500">Phí định kỳ</label><p className="text-sm font-semibold text-blue-600">{formatCurrency(showDetail.premium_number ?? showDetail.premiumNumber ?? 0)}</p></div>
