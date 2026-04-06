@@ -1,16 +1,15 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, Phone, CheckCircle, XCircle, Clock, Plus, Edit2, Trash2, Calendar, Gift, Sparkles, Cake } from 'lucide-react';
+import { Search, Phone, CheckCircle, XCircle, Clock, Plus, Trash2, Calendar, Cake } from 'lucide-react';
 import { useData } from '@/lib/DataProvider';
 import { formatCurrency, formatDate, getDaysStatus, getUpcomingBirthdays } from '@/lib/utils';
 
 export default function CarePage() {
-  const { tasks, profiles, loading, updateTask, deleteTask, addTask } = useData();
+  const { tasks, profiles, loading, addTask, deleteTask } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
-  const [editingTask, setEditingTask] = useState<any>(null);
   const [formData, setFormData] = useState({
     customerName: '', phone: '', dueDate: '', paymentCycle: 'Hàng quý',
     premium: 0, ape: 0, status: 'Đang hiệu lực', task: '', deadline: '', notes: ''
@@ -31,22 +30,13 @@ export default function CarePage() {
 
   const handleSubmit = async () => {
     if (!formData.customerName) return;
-    if (editingTask) {
-      await updateTask(editingTask.id, formData);
-      setEditingTask(null);
-    } else {
-      await addTask({ ...formData, daysToDue: 0, completed: false });
-    }
+    await addTask({ ...formData, daysToDue: 0, completed: false });
     setShowForm(false);
     setFormData({ customerName: '', phone: '', dueDate: '', paymentCycle: 'Hàng quý', premium: 0, ape: 0, status: 'Đang hiệu lực', task: '', deadline: '', notes: '' });
   };
 
   const handleDelete = async (id: number) => {
     await deleteTask(id);
-  };
-
-  const handleToggleComplete = async (id: number, completed: boolean) => {
-    await updateTask(id, { completed: !completed });
   };
 
   const stats = {
@@ -104,7 +94,7 @@ export default function CarePage() {
         <div className="flex flex-wrap gap-3">
           <div className="flex-1 min-w-[200px] relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" /><input type="text" placeholder="Tìm theo tên, SĐT..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" /></div>
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm"><option value="all">Tất cả</option><option value="pending">Chờ xử lý</option><option value="completed">Hoàn thành</option></select>
-          <button onClick={() => { setShowForm(true); setEditingTask(null); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"><Plus className="w-4 h-4" />Thêm công việc</button>
+          <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"><Plus className="w-4 h-4" />Thêm công việc</button>
         </div>
       </div>
 
@@ -116,9 +106,9 @@ export default function CarePage() {
           return (
             <div key={task.id} className={`bg-white rounded-xl p-4 shadow-sm border transition-all ${completed ? 'border-green-200 bg-green-50/50' : days < 0 ? 'border-red-200' : 'border-gray-100 hover:shadow-md'}`}>
               <div className="flex items-start gap-4">
-                <button onClick={() => handleToggleComplete(task.id, completed)} className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${completed ? 'bg-green-500 border-green-500' : 'border-gray-300 hover:border-blue-500'}`}>
+                <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${completed ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
                   {completed && <CheckCircle className="w-4 h-4 text-white" />}
-                </button>
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -138,7 +128,6 @@ export default function CarePage() {
                   {task.notes && <p className="mt-2 text-sm text-gray-500 italic">Ghi chú: {task.notes}</p>}
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
-                  <button onClick={() => { setEditingTask(task); setShowForm(true); setFormData({ customerName: task.customer_name || '', phone: task.phone || '', dueDate: task.due_date || '', paymentCycle: task.payment_cycle || 'Hàng quý', premium: task.premium || 0, ape: task.ape || 0, status: task.status || '', task: task.task || '', deadline: task.deadline || '', notes: task.notes || '' }); }} className="p-1.5 hover:bg-blue-50 rounded-lg"><Edit2 className="w-4 h-4 text-gray-400 hover:text-blue-600" /></button>
                   <button onClick={() => handleDelete(task.id)} className="p-1.5 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" /></button>
                 </div>
               </div>
@@ -150,7 +139,7 @@ export default function CarePage() {
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowForm(false)}>
           <div className="bg-white rounded-xl max-w-lg w-full" onClick={e => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-200"><h3 className="text-lg font-bold text-gray-900">{editingTask ? 'Chỉnh sửa công việc' : 'Thêm công việc mới'}</h3></div>
+            <div className="p-6 border-b border-gray-200"><h3 className="text-lg font-bold text-gray-900">Thêm công việc mới</h3></div>
             <div className="p-6 space-y-4">
               <div><label className="block text-sm font-medium text-gray-700 mb-1">Tên khách hàng</label><input type="text" value={formData.customerName} onChange={e => setFormData({ ...formData, customerName: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
               <div className="grid grid-cols-2 gap-4">
@@ -166,7 +155,7 @@ export default function CarePage() {
             </div>
             <div className="p-4 border-t border-gray-200 flex justify-end gap-3">
               <button onClick={() => setShowForm(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium">Hủy</button>
-              <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">{editingTask ? 'Cập nhật' : 'Thêm mới'}</button>
+              <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">Thêm mới</button>
             </div>
           </div>
         </div>
