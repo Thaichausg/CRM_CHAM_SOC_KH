@@ -78,8 +78,6 @@ export default function DashboardPage() {
 
   const statCards = [
     { title: 'Tổng hợp đồng', value: stats.totalContracts, icon: FileText, iconBg: 'bg-blue-500' },
-    { title: 'Tổng APE', value: formatCurrency(stats.totalApe), icon: DollarSign, iconBg: 'bg-green-500' },
-    { title: 'Tổng phí định kỳ', value: formatCurrency(stats.totalPremium), icon: TrendingUp, iconBg: 'bg-purple-500' },
     { title: 'Hợp đồng hiệu lực', value: stats.activeContracts, icon: Users, iconBg: 'bg-emerald-500' },
     { title: 'Mất hiệu lực', value: stats.lapsedContracts, icon: TrendingDown, iconBg: 'bg-red-500' },
     { title: 'Sắp đến hạn', value: stats.dueSoon, icon: Clock, iconBg: 'bg-yellow-500' },
@@ -89,6 +87,26 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Highlighted APE and Premium Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center gap-3 mb-2">
+            <DollarSign className="w-8 h-8 opacity-90" />
+            <span className="text-green-100 text-sm font-medium">Tổng APE</span>
+          </div>
+          <p className="text-3xl font-bold">{formatCurrency(stats.totalApe)}</p>
+          <p className="text-green-200 text-xs mt-1">Annual Premium Equivalent</p>
+        </div>
+        <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center gap-3 mb-2">
+            <TrendingUp className="w-8 h-8 opacity-90" />
+            <span className="text-purple-100 text-sm font-medium">Tổng phí định kỳ</span>
+          </div>
+          <p className="text-3xl font-bold">{formatCurrency(stats.totalPremium)}</p>
+          <p className="text-purple-200 text-xs mt-1">Tổng phí bảo hiểm cần thu</p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((card) => (
           <div key={card.title} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
