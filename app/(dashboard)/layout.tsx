@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -25,87 +25,136 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const handleToggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  const handleContentClick = () => {
+    if (isMobile && sidebarOpen) {
+      setSidebarOpen(false);
+    }
+  };
+
+  const handleNavClick = () => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
+      {/* Sidebar - wider on desktop, compact on mobile */}
       <aside
-        className={`${
-          sidebarOpen ? 'w-64' : 'w-0 overflow-hidden'
-        } bg-slate-900 text-white transition-all duration-300 flex flex-col flex-shrink-0`}
+        className={`
+          fixed md:relative z-50 h-full flex flex-col flex-shrink-0
+          bg-slate-900 text-white transition-all duration-300
+          ${isMobile 
+            ? (sidebarOpen ? 'w-64' : 'w-0 overflow-hidden') 
+            : 'w-64'
+          }
+          ${isMobile ? 'shadow-2xl' : ''}
+        `}
       >
-        <div className="p-4 border-b border-slate-700">
-          <h1 className="text-xl font-bold flex items-center gap-2">
+        <div className="p-3 md:p-4 border-b border-slate-700 flex items-center justify-between">
+          <h1 className="text-lg md:text-xl font-bold flex items-center gap-2">
             <span className="text-blue-400">CRM</span>
-            <span className="text-slate-300 text-sm">Chăm sóc KH</span>
+            {!isMobile && <span className="text-slate-300 text-sm">Chăm sóc KH</span>}
           </h1>
+          {isMobile && sidebarOpen && (
+            <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-slate-800 rounded">
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-2 md:p-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                onClick={handleNavClick}
+                className={`flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-blue-600 text-white'
                     : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                 }`}
               >
                 <item.icon className="w-5 h-5 flex-shrink-0" />
-                {sidebarOpen && <span>{item.label}</span>}
+                {(!isMobile || sidebarOpen) && <span className="truncate">{item.label}</span>}
               </Link>
             );
           })}
         </nav>
 
         {/* User info at bottom */}
-        <div className="p-3 border-t border-slate-700">
-          <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-800/50">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-              A
-            </div>
-            {sidebarOpen && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">Admin</p>
-                <p className="text-xs text-slate-400">Quản trị viên</p>
+        <div className="p-2 md:p-3 border-t border-slate-700">
+          {(!isMobile || sidebarOpen) && (
+            <>
+              <div className="flex items-center gap-2 md:gap-3 p-2 rounded-lg bg-slate-800/50">
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                  A
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">Admin</p>
+                  <p className="text-xs text-slate-400">Quản trị viên</p>
+                </div>
               </div>
-            )}
-          </div>
-          {sidebarOpen && (
-            <button className="w-full mt-2 flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-              <LogOut className="w-4 h-4" />
-              Đăng xuất
-            </button>
+              <button className="w-full mt-2 flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                <LogOut className="w-4 h-4" />
+                Đăng xuất
+              </button>
+              <p className="text-xs text-slate-500 text-center mt-2">
+                HTC Integrated CRM v1.0
+              </p>
+            </>
           )}
-          <p className="text-xs text-slate-500 text-center mt-2">
-            HTC Integrated CRM v1.0
-          </p>
         </div>
       </aside>
 
+      {/* Overlay for mobile */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div 
+        className="flex-1 flex flex-col overflow-hidden"
+        onClick={handleContentClick}
+      >
         {/* Top bar */}
-        <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 flex-shrink-0">
+        <header className="bg-white border-b border-gray-200 px-3 md:px-4 py-2 md:py-3 flex items-center gap-2 md:gap-3 flex-shrink-0">
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={handleToggleSidebar}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <Menu className="w-5 h-5" />
           </button>
           <div className="flex-1">
-            <h2 className="text-lg font-semibold text-gray-800">
+            <h2 className="text-base md:text-lg font-semibold text-gray-800">
               {navItems.find(n => n.href === pathname)?.label || 'Dashboard'}
             </h2>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto p-3 md:p-6">
           {children}
         </main>
       </div>
