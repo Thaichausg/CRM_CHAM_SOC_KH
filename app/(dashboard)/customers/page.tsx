@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Search, ChevronLeft, ChevronRight, Eye, Filter, X } from 'lucide-react';
 import { useData } from '@/lib/DataProvider';
 import { formatCurrency, getStatusColor, formatDate } from '@/lib/utils';
 
@@ -10,9 +10,24 @@ export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [cycleFilter, setCycleFilter] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [nameFilter, setNameFilter] = useState('');
+  const [contractCountFilter, setContractCountFilter] = useState('all');
+  const [premiumRange, setPremiumRange] = useState<[number, number]>([0, 1000000000]);
   const [currentPage, setCurrentPage] = useState(1);
   const [showDetail, setShowDetail] = useState<any>(null);
   const itemsPerPage = 20;
+
+  const customerStats = useMemo(() => {
+    const stats: Record<string, { count: number; totalPremium: number }> = {};
+    (customers || []).forEach((c: any) => {
+      const name = c.name || c.policy_holder || '';
+      if (!stats[name]) stats[name] = { count: 0, totalPremium: 0 };
+      stats[name].count++;
+      stats[name].totalPremium += c.premium_number ?? c.premiumNumber ?? 0;
+    });
+    return stats;
+  }, [customers]);
 
   const filtered = (customers || []).filter((c: any) => {
     const name = c.name || '';
@@ -26,11 +41,33 @@ export default function CustomersPage() {
     const matchStatus = statusFilter === 'all' || status.includes(statusFilter === 'active' ? 'Đang hiệu lực' : 'Mất hiệu lực');
     const cycle = c.payment_cycle || c.paymentCycle || '';
     const matchCycle = cycleFilter === 'all' || cycle === cycleFilter;
-    return matchSearch && matchStatus && matchCycle;
+    
+    const matchName = nameFilter === '' || name.toLowerCase().includes(nameFilter.toLowerCase());
+    
+    const customerKey = c.name || c.policy_holder || '';
+    const contractCount = customerStats[customerKey]?.count || 1;
+    const matchContractCount = contractCountFilter === 'all' ||
+      (contractCountFilter === '1' && contractCount === 1) ||
+      (contractCountFilter === '2' && contractCount === 2) ||
+      (contractCountFilter === '3' && contractCount === 3) ||
+      (contractCountFilter === '4+' && contractCount >= 4);
+    
+    const premium = c.premium_number ?? c.premiumNumber ?? 0;
+    const matchPremium = premium >= premiumRange[0] && premium <= premiumRange[1];
+
+    return matchSearch && matchStatus && matchCycle && matchName && matchContractCount && matchPremium;
   });
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const resetFilters = () => {
+    setNameFilter('');
+    setContractCountFilter('all');
+    setPremiumRange([0, 1000000000]);
+  };
+
+  const hasActiveFilters = nameFilter !== '' || contractCountFilter !== 'all' || premiumRange[0] > 0 || premiumRange[1] < 1000000000;
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>;
@@ -55,8 +92,53 @@ export default function CustomersPage() {
             <option value="Nửa năm">Nửa năm</option>
             <option value="Hàng năm">Hàng năm</option>
           </select>
+          <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showFilters || hasActiveFilters ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+            <Filter className="w-4 h-4" />
+            Bộ lọc
+            {hasActiveFilters && <span className="w-2 h-2 bg-white rounded-full"></span>}
+          </button>
         </div>
-        <div className="mt-2 text-sm text-gray-500">Tìm thấy <span className="font-semibold text-gray-800">{filtered.length}</span> khách hàng</div>
+        
+        {showFilters && (
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-gray-800">Bộ lọc nâng cao</h4>
+              {hasActiveFilters && (
+                <button onClick={resetFilters} className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1">
+                  <X className="w-4 h-4" /> Xóa lọc
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tên khách hàng</label>
+                <input type="text" value={nameFilter} onChange={e => { setNameFilter(e.target.value); setCurrentPage(1); }} placeholder="Nhập tên khách hàng..." className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Số hợp đồng đã mua</label>
+                <select value={contractCountFilter} onChange={e => { setContractCountFilter(e.target.value); setCurrentPage(1); }} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                  <option value="all">Tất cả</option>
+                  <option value="1">1 hợp đồng</option>
+                  <option value="2">2 hợp đồng</option>
+                  <option value="3">3 hợp đồng</option>
+                  <option value="4+">4+ hợp đồng</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tổng phí (VND)</label>
+                <div className="flex gap-2">
+                  <input type="number" value={premiumRange[0]} onChange={e => { setPremiumRange([Number(e.target.value), premiumRange[1]]); setCurrentPage(1); }} placeholder="Từ" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                  <input type="number" value={premiumRange[1]} onChange={e => { setPremiumRange([premiumRange[0], Number(e.target.value)]); setCurrentPage(1); }} placeholder="Đến" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <div className="mt-2 text-sm text-gray-500">
+          Tìm thấy <span className="font-semibold text-gray-800">{filtered.length}</span> khách hàng
+          {hasActiveFilters && <span className="ml-2 text-blue-600">(đã lọc)</span>}
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
