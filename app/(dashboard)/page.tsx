@@ -14,12 +14,25 @@ import { formatCurrency, formatNumber, getGroupColor, getDaysStatus } from '@/li
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export default function DashboardPage() {
-  const { customers, groups, tasks, stats, loading } = useData();
+  const { customers, groups, tasks, stats, loading, error } = useData();
+  
+  console.log('Dashboard - customers:', customers?.length, 'groups:', groups?.length, 'stats:', stats);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center text-red-600">
+          <p>Lỗi: {error}</p>
+          <p className="text-sm text-gray-500 mt-2">Kiểm tra kết nối database</p>
+        </div>
       </div>
     );
   }
